@@ -1,0 +1,408 @@
+// ======================
+// POKÉMON GAMING THEME
+// Modern Cyber-Poké Style
+// ======================
+
+// ===== MIXINS =====
+@mixin neon-glow($color) {
+  filter: drop-shadow(0 0 5px $color);
+}
+
+@mixin crt-scanlines {
+  &::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15) 0px,
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+}
+
+@mixin pixelate($time) {
+  transition: all $time cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    image-rendering: pixelated;
+    transform: scale(1.05);
+  }
+}
+
+@mixin glowing-border($color, $width: 2px) {
+  border: $width solid $color;
+  box-shadow: 0 0 10px $color;
+}
+
+@mixin respond-to($size) {
+  @if map-has-key($breakpoints, $size) {
+    @media (max-width: map-get($breakpoints, $size)) {
+      @content;
+    }
+  }
+}
+
+@mixin apply-theme($theme) {
+  background-color: map-get(map-get($themes, $theme), background);
+  color: map-get(map-get($themes, $theme), text);
+}
+
+// ===== COLOR VARIABLES =====
+$pokered: #ff0000; // Classic Pokéball red
+$neon-blue: #00f3ff; // Cyberpunk accent
+$matrix-green: #00ff4c; // Glowing text/effects
+$dark-bg: #0a0a12; // Deep space background
+$hud-yellow: #ffe600; // Warning/energy accents
+$cyber-purple: #bd00ff; // UI highlights
+
+// ===== SCSS MAPS & LOOPS =====
+$poke-types: (
+  fire: #f08030,
+  water: #6890f0,
+  grass: #78c850,
+  electric: #f8d030,
+  psychic: #f85888
+);
+
+$breakpoints: (
+  small: 480px,
+  medium: 768px,
+  large: 1024px
+);
+
+$themes: (
+  classic: (
+    background: #fff,
+    accent: #ff0000,
+    text: #333
+  ),
+  cyber: (
+    background: $dark-bg,
+    accent: $neon-blue,
+    text: $matrix-green
+  )
+);
+
+// Generate type-specific classes
+@each $type, $color in $poke-types {
+  .type-#{$type} {
+    background-color: $color;
+    color: if(lightness($color) > 50, black, white);
+    @include neon-glow($color);
+  }
+}
+
+// ===== PLACEHOLDER SELECTORS =====
+%card-style {
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+// ===== BASE STYLES =====
+body {
+  background: linear-gradient(
+    45deg,
+    darken($dark-bg, 5%),
+    lighten($dark-bg, 5%)
+  );
+  color: $neon-blue;
+  font-family: 'Courier New', monospace;
+  line-height: 1.6;
+  @include crt-scanlines;
+  
+  &::before {
+    content: "";
+    position: fixed;
+    top: -20%;
+    left: -20%;
+    width: 140%;
+    height: 140%;
+    background: radial-gradient(circle, rgba($neon-blue, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+}
+
+// Theme classes
+body.classic-theme {
+  @include apply-theme(classic);
+}
+
+body.cyber-theme {
+  @include apply-theme(cyber);
+}
+
+// ===== GAME CONTAINER =====
+.app, .game-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  min-height: 100vh;
+  perspective: 1000px;
+}
+
+// ===== HEADER & SCORE BOARD =====
+.header {
+  margin-bottom: 2rem;
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.2rem;
+    text-transform: uppercase;
+    @include neon-glow($pokered);
+  }
+  h5 {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: $hud-yellow;
+  }
+  hr {
+    border: 0;
+    height: 1px;
+    background: $neon-blue;
+    margin: 1rem auto;
+    max-width: 50%;
+  }
+}
+
+.score-board {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  
+  .score {
+    padding: 0.5rem 1rem;
+    background: rgba($neon-blue, 0.1);
+    border-radius: 5px;
+    @include neon-glow($matrix-green);
+  }
+}
+
+// ===== POKÉMON GRID & CARD =====
+.pokemon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin: 0 auto;
+  
+  @include respond-to(medium) {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+// --- CARD FLIP EFFECT ---
+// Expected HTML structure in Card.jsx:
+// <div class="pokemon-card" onClick={...}>
+//   <div class="card-inner">
+//     <div class="card-front">
+//       <div class="placeholder-content">
+//         <span>Poké</span>
+//       </div>
+//     </div>
+//     <div class="card-back">
+//       <img class="pokemon-image" src="..." alt="..." />
+//       <h3 class="pokemon-name">Name</h3>
+//     </div>
+//   </div>
+// </div>
+.pokemon-card {
+  position: relative;
+  width: 200px;  // Adjust as needed
+  height: 250px; // Adjust as needed
+  perspective: 1000px;
+  @extend %card-style;
+  cursor: pointer;
+  @include glowing-border($pokered);
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+
+  // Flip the inner container on hover (rotates both faces)
+  &:hover .card-inner {
+    transform: rotateY(180deg);
+  }
+
+  .card-front,
+  .card-back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: inherit;
+  }
+
+  // ----- CARD-FRONT (Flat, Trading Card Look) -----
+  .card-front {
+    background: linear-gradient(135deg, lighten($pokered, 20%), darken($pokered, 10%));
+    border: 2px solid $neon-blue;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    // Removed padding so the front aligns exactly with .pokemon-card
+    margin: 0;
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png') no-repeat center;
+      background-size: 50%;
+      opacity: 0.8;
+      z-index: 1;
+    }
+
+    .placeholder-content {
+      position: relative;
+      z-index: 2;
+      font-family: 'Pokemon Solid', sans-serif; // Use a Pokémon-inspired font if available
+      font-size: 2rem;
+      color: $matrix-green;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  // ----- CARD-BACK (3D Effect Applied Only to Back) -----
+  .card-back {
+    background: white;
+    transform: rotateY(180deg); // initial state for back face
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.6s ease;
+    transform-origin: center;
+
+    .pokemon-image {
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
+      margin-bottom: 0.5rem;
+    }
+    
+    .pokemon-name {
+      margin-top: 1rem;
+      text-transform: capitalize;
+      color: #333;
+      text-align: center;
+      @include neon-glow($cyber-purple);
+    }
+  }
+
+  // On hover, only the back face pops out with a 3D translateZ effect.
+  &:hover .card-back {
+    transform: rotateY(180deg) translateZ(20px);
+  }
+}
+
+// ===== LOADING & ERROR =====
+.loading,
+.error {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-top: 3rem;
+}
+
+// ===== OVERLAY & POPUP (GAME OVER / WIN) =====
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup {
+  @extend %card-style;
+  background: white;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  animation: popIn 0.3s ease-out;
+  
+  h2 {
+    margin-bottom: 1rem;
+    color: $pokered;
+  }
+  
+  p {
+    margin-bottom: 1rem;
+  }
+  
+  .play-again-btn {
+    background: #ff4757;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 1rem;
+    @include neon-glow($pokered);
+    
+    &:hover {
+      background: #ff6b81;
+    }
+  }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+// ===== ADVANCED ANIMATIONS & TRANSITIONS =====
+@keyframes pokeball-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.pokeball-spinner {
+  animation: pokeball-spin 1s linear infinite;
+}
+
+// ===== RESPONSIVE DESIGN =====
+@media (max-width: 768px) {
+  .inventory-grid {
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 1rem;
+  }
+  
+  .btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (hover: hover) {
+  .btn:hover {
+    filter: brightness(1.2);
+    cursor: pointer;
+  }
+}
